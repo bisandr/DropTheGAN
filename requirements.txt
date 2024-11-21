@@ -1,7 +1,5 @@
 imageio
 numpy
 pillow
-python
-pytorch
 scikit-image
 fire
