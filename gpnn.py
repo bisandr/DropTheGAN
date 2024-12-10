@@ -54,6 +54,43 @@ def gpnn(pyramid: Sequence[torch.Tensor],
                                             output_pyramid_shape[level - 1])
     return generated
 
+"""
+def pnn(query: torch.Tensor,
+        key: torch.Tensor,
+        value: torch.Tensor,
+        mask: Optional[torch.Tensor] = None,
+        patch_size: int = 7,
+        alpha: float = 5e-3,
+        reduce: str = 'weighted_mean') -> torch.Tensor:
+    query = query.unsqueeze(0)
+    key = key.unsqueeze(0)
+    value = value.unsqueeze(0)
+    if mask is not None:
+        mask = mask.unsqueeze(0)
+    query_patches = fold.unfold2d(query, patch_size)
+    query_patches_column, query_patches_size = fold.view_as_column(
+        query_patches)
+    key_patches_column, _ = fold.view_as_column(fold.unfold2d(key, patch_size))
+    value_patches_column, _ = fold.view_as_column(
+        fold.unfold2d(value, patch_size))
+    if mask is not None:
+        mask = (mask > 0.5).to(query)
+        mask_patches_column, _ = fold.view_as_column(
+            fold.unfold2d(mask, patch_size))
+        valid_patches_mask = mask_patches_column.sum(
+            dim=2) > mask_patches_column.shape[2] - 0.5
+        key_patches_column = key_patches_column.squeeze(0)[
+            valid_patches_mask.squeeze(0)].unsqueeze(0)
+        value_patches_column = value_patches_column.squeeze(0)[
+            valid_patches_mask.squeeze(0)].unsqueeze(0)
+    _, indices = find_normalized_nearest_neighbors(query_patches_column,
+                                                   key_patches_column, alpha)
+    out_patches_column = F.embedding(indices.squeeze(2),
+                                     value_patches_column.squeeze(0))
+    out_patches = fold.view_as_image(out_patches_column, query_patches_size)
+    output = fold.fold2d(out_patches, reduce=reduce)
+    return output.squeeze(0)
+"""
 
 def pnn(query: torch.Tensor,
         key: torch.Tensor,
@@ -62,6 +99,9 @@ def pnn(query: torch.Tensor,
         patch_size: int = 7,
         alpha: float = 5e-3,
         reduce: str = 'weighted_mean') -> torch.Tensor:
+    # Debug print for alpha
+    print(f"alpha: {alpha}, type: {type(alpha)}")
+
     query = query.unsqueeze(0)
     key = key.unsqueeze(0)
     value = value.unsqueeze(0)
