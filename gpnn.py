@@ -195,7 +195,7 @@ def find_weighted_nearest_neighbors(
     #     indices[:, start:start + tile_height] = idx
     # return values, indices
 
-
+"""
 def find_normalized_nearest_neighbors(
     queries: torch.Tensor,
     keys: torch.Tensor,
@@ -213,3 +213,30 @@ def find_normalized_nearest_neighbors(
         normalizer = None
     return find_weighted_nearest_neighbors(queries, keys, normalizer,
                                            max_memory_usage)
+"""
+
+def find_normalized_nearest_neighbors(
+    queries: torch.Tensor,
+    keys: torch.Tensor,
+    alpha: float = 5e-3,
+    max_memory_usage: int = _MAX_MEMORY_SIZE,
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    # Ensure _INF is defined
+    _INF = float('inf')
+
+    # Validate alpha
+    if not isinstance(alpha, (int, float)):
+        raise TypeError(f"alpha must be a number, but got {type(alpha)}")
+
+    if alpha < _INF:
+        # compute min distance where queries<-keys, and keys<-queries
+        normalizer, _ = find_weighted_nearest_neighbors(
+            keys, queries, None, max_memory_usage)
+        normalizer += alpha
+        normalizer = 1 / normalizer
+        normalizer = normalizer.transpose(1, 2)  # "keys" <-> "queries"
+    else:
+        normalizer = None
+
+    return find_weighted_nearest_neighbors(queries, keys, normalizer, max_memory_usage)
+
