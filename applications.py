@@ -11,7 +11,7 @@ _INF = float('inf')
 
 def generation(image: torch.Tensor,
                noise_std: float = 0.75,
-               alpha: float = _INF,
+               alpha: float = 5e-3,
                patch_size: int = 7,
                downscale_ratio: float = 0.75,
                num_levels: int = 9,
@@ -48,7 +48,7 @@ def editing(source_image: torch.Tensor,
 
 def conditional_inpainting(masked_image: torch.Tensor,
                            mask: torch.Tensor,
-                           alpha: float = _INF,
+                           alpha: float = 5e-3,
                            patch_size: int = 7,
                            downscale_ratio: float = 0.75,
                            num_levels: int = 5,
