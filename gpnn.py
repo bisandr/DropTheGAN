@@ -60,7 +60,7 @@ def pnn(query: torch.Tensor,
         value: torch.Tensor,
         mask: Optional[torch.Tensor] = None,
         patch_size: int = 7,
-        alpha: float = _INF,
+        alpha: float = 5e-3,
         reduce: str = 'weighted_mean') -> torch.Tensor:
     query = query.unsqueeze(0)
     key = key.unsqueeze(0)
@@ -199,7 +199,7 @@ def find_weighted_nearest_neighbors(
 def find_normalized_nearest_neighbors(
     queries: torch.Tensor,
     keys: torch.Tensor,
-    alpha: float = _INF,
+    alpha: float = 5e-3,
     max_memory_usage: int = _MAX_MEMORY_SIZE,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     if alpha < _INF:
