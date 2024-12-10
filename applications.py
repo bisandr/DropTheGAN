@@ -28,7 +28,7 @@ def generation(image: torch.Tensor,
 
 def editing(source_image: torch.Tensor,
             edited_image: torch.Tensor,
-            alpha: float = _INF,
+            alpha: float = 5e-3,
             patch_size: int = 7,
             downscale_ratio: float = 0.75,
             num_levels: int = 5,
