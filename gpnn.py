@@ -15,7 +15,7 @@ def gpnn(pyramid: Sequence[torch.Tensor],
          initial_guess: torch.Tensor,
          downscale_ratio: float = 0.75,
          patch_size: int = 7,
-         alpha: float = 5e-3,
+         alpha: float = _INF,
          output_pyramid_shape: Optional[Sequence[torch.Size]] = None,
          mask_pyramid: Optional[Sequence[torch.Tensor]] = None,
          num_iters_in_level: int = 10,
@@ -54,54 +54,14 @@ def gpnn(pyramid: Sequence[torch.Tensor],
                                             output_pyramid_shape[level - 1])
     return generated
 
-"""
-def pnn(query: torch.Tensor,
-        key: torch.Tensor,
-        value: torch.Tensor,
-        mask: Optional[torch.Tensor] = None,
-        patch_size: int = 7,
-        alpha: float = 5e-3,
-        reduce: str = 'weighted_mean') -> torch.Tensor:
-    query = query.unsqueeze(0)
-    key = key.unsqueeze(0)
-    value = value.unsqueeze(0)
-    if mask is not None:
-        mask = mask.unsqueeze(0)
-    query_patches = fold.unfold2d(query, patch_size)
-    query_patches_column, query_patches_size = fold.view_as_column(
-        query_patches)
-    key_patches_column, _ = fold.view_as_column(fold.unfold2d(key, patch_size))
-    value_patches_column, _ = fold.view_as_column(
-        fold.unfold2d(value, patch_size))
-    if mask is not None:
-        mask = (mask > 0.5).to(query)
-        mask_patches_column, _ = fold.view_as_column(
-            fold.unfold2d(mask, patch_size))
-        valid_patches_mask = mask_patches_column.sum(
-            dim=2) > mask_patches_column.shape[2] - 0.5
-        key_patches_column = key_patches_column.squeeze(0)[
-            valid_patches_mask.squeeze(0)].unsqueeze(0)
-        value_patches_column = value_patches_column.squeeze(0)[
-            valid_patches_mask.squeeze(0)].unsqueeze(0)
-    _, indices = find_normalized_nearest_neighbors(query_patches_column,
-                                                   key_patches_column, alpha)
-    out_patches_column = F.embedding(indices.squeeze(2),
-                                     value_patches_column.squeeze(0))
-    out_patches = fold.view_as_image(out_patches_column, query_patches_size)
-    output = fold.fold2d(out_patches, reduce=reduce)
-    return output.squeeze(0)
-"""
 
 def pnn(query: torch.Tensor,
         key: torch.Tensor,
         value: torch.Tensor,
         mask: Optional[torch.Tensor] = None,
         patch_size: int = 7,
-        alpha: float = 5e-3,
+        alpha: float = _INF,
         reduce: str = 'weighted_mean') -> torch.Tensor:
-    # Debug print for alpha
-    print(f"alpha: {alpha}, type: {type(alpha)}")
-
     query = query.unsqueeze(0)
     key = key.unsqueeze(0)
     value = value.unsqueeze(0)
@@ -235,11 +195,11 @@ def find_weighted_nearest_neighbors(
     #     indices[:, start:start + tile_height] = idx
     # return values, indices
 
-"""
+
 def find_normalized_nearest_neighbors(
     queries: torch.Tensor,
     keys: torch.Tensor,
-    alpha: float = 5e-3,
+    alpha: float = _INF,
     max_memory_usage: int = _MAX_MEMORY_SIZE,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     if alpha < _INF:
@@ -253,30 +213,3 @@ def find_normalized_nearest_neighbors(
         normalizer = None
     return find_weighted_nearest_neighbors(queries, keys, normalizer,
                                            max_memory_usage)
-"""
-
-def find_normalized_nearest_neighbors(
-    queries: torch.Tensor,
-    keys: torch.Tensor,
-    alpha: float = 5e-3,
-    max_memory_usage: int = _MAX_MEMORY_SIZE,
-) -> Tuple[torch.Tensor, torch.Tensor]:
-    # Ensure _INF is defined
-    _INF = float('inf')
-
-    # Validate alpha
-    if not isinstance(alpha, (int, float)):
-        raise TypeError(f"alpha must be a number, but got {type(alpha)}")
-
-    if alpha < _INF:
-        # compute min distance where queries<-keys, and keys<-queries
-        normalizer, _ = find_weighted_nearest_neighbors(
-            keys, queries, None, max_memory_usage)
-        normalizer += alpha
-        normalizer = 1 / normalizer
-        normalizer = normalizer.transpose(1, 2)  # "keys" <-> "queries"
-    else:
-        normalizer = None
-
-    return find_weighted_nearest_neighbors(queries, keys, normalizer, max_memory_usage)
-
